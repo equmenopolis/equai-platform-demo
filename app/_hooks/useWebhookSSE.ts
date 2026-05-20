@@ -4,7 +4,8 @@ import { useEffect, useRef } from "react";
 
 const POLL_INTERVAL_MS = 5000;
 
-// Subscribes to SSE for webhook delivery; falls back to polling /api/webhook/[sessionId] when SSE drops.
+// EQU webhooks are server-to-server, so the demo's backend bridges them to the
+// browser via SSE; if the SSE drops we fall back to polling /api/webhook/[sessionId].
 const useWebhookSSE = <T = unknown>(
   sessionId: string | null,
   onMessage: (data: T) => void,

@@ -1,3 +1,6 @@
+// GET /api/webhook/:sessionId — poll fallback used by the browser when its
+// SSE connection drops mid-wait. Returns the latest webhook payload the
+// platform has delivered for that session, or 404 until something arrives.
 import type { NextRequest } from "next/server";
 import { AppError, errorToResponse } from "../../_lib/app-error";
 import { ok } from "../../_lib/response";

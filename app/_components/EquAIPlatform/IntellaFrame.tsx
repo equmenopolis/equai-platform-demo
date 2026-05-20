@@ -1,5 +1,8 @@
 "use client";
 
+// Embeds the learner webapp at {LEARNER_WEBAPP_URL}/call?nonce=… and forwards
+// its SESSION_* postMessage events to the parent. Each message is origin-guarded
+// against the iframe src to drop anything not coming from the learner webapp.
 import { motion } from "framer-motion";
 import { memo, useCallback, useEffect, useSyncExternalStore } from "react";
 import {

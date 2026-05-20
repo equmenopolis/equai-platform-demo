@@ -1,3 +1,7 @@
+// Registers this app's /api/webhook URL with the EQU AI Platform so it can
+// deliver session lifecycle and assessment events. The api_key sent here
+// becomes the Bearer token EQU includes on every callback for the receiver
+// to verify.
 import type { EquApiResponse } from "@/app/_dtos";
 import { WEBHOOK_SECRET, webhookSecretFingerprint } from "./webhook-secret";
 
