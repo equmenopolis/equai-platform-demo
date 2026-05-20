@@ -99,7 +99,17 @@ export const EquAIPlatform = () => {
   }, [chosenScenario, withSessionLoading, createSession]);
 
   const onConversationEnded = useCallback(() => {
-    setSrc(null);
+    // For scenarios that don't produce an assessment, the iframe's
+    // SESSION_ENDED is the terminal signal — surface the "no analysis"
+    // panel immediately rather than waiting for the platform's
+    // session_ended webhook, which may lag or be unreliable.
+    startTransition(() => {
+      setSrc(null);
+      if (!activeScenarioRef.current.producesResults) {
+        setEndedWithoutResults(true);
+        setSessionId(null);
+      }
+    });
   }, []);
 
   const onChangeScenario = useCallback((scenario: DemoScenario) => {
