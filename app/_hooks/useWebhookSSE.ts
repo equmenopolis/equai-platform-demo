@@ -2,40 +2,68 @@
 
 import { useEffect, useRef } from "react";
 
+const POLL_INTERVAL_MS = 5000;
+
+// Subscribes to SSE for webhook delivery; falls back to polling /api/webhook/[sessionId] when SSE drops.
 const useWebhookSSE = <T = unknown>(
   sessionId: string | null,
   onMessage: (data: T) => void,
-  onError?: (event: Event) => void,
 ) => {
   const onMessageRef = useRef(onMessage);
-  const onErrorRef = useRef(onError);
 
   useEffect(() => {
     onMessageRef.current = onMessage;
-    onErrorRef.current = onError;
   });
 
   useEffect(() => {
     if (!sessionId) return;
 
+    let cancelled = false;
+    let pollTimer: ReturnType<typeof setTimeout> | null = null;
+    let lastDeliveredKey = "";
+
+    const deliverOnce = (payload: T) => {
+      const key = JSON.stringify(payload);
+      if (key === lastDeliveredKey) return;
+      lastDeliveredKey = key;
+      onMessageRef.current(payload);
+    };
+
+    const poll = async () => {
+      if (cancelled) return;
+      try {
+        const res = await fetch(`/api/webhook/${sessionId}`);
+        if (res.ok) {
+          const body = (await res.json()) as { status: string; result?: T };
+          if (body.status === "OK" && body.result) deliverOnce(body.result);
+        }
+      } catch {
+        // ignore network errors, the next tick retries
+      }
+      if (!cancelled) {
+        pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
+      }
+    };
+
     const es = new EventSource(`/api/sse/${sessionId}`);
 
     es.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data) as T;
-        onMessageRef.current(data);
+        deliverOnce(JSON.parse(event.data) as T);
       } catch {
         // ignore malformed events
       }
     };
 
-    es.onerror = (event) => {
+    es.onerror = () => {
       es.close();
-      onErrorRef.current?.(event);
+      pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
     };
 
     return () => {
+      cancelled = true;
       es.close();
+      if (pollTimer) clearTimeout(pollTimer);
     };
   }, [sessionId]);
 };

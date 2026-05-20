@@ -25,9 +25,16 @@ type Props = {
   onMessage?: (message: IntellaMessage) => void;
   onEnded?: () => void;
   onStart?: () => void;
+  onError?: () => void;
 };
 
-const IntellaFrame = ({ src, onMessage, onEnded, onStart }: Props) => {
+const IntellaFrame = ({
+  src,
+  onMessage,
+  onEnded,
+  onStart,
+  onError,
+}: Props) => {
   const expectedOrigin = new URL(src).origin;
   const frameHeight = useSyncExternalStore(
     subscribeToResize,
@@ -52,12 +59,16 @@ const IntellaFrame = ({ src, onMessage, onEnded, onStart }: Props) => {
           case "SESSION_ENDED":
             onEnded?.();
             break;
+          case "SESSION_ERROR":
+            // Manual termination, timeout, or platform error — no assessment will arrive.
+            onError?.();
+            break;
           default:
             break;
         }
       }
     },
-    [expectedOrigin, onMessage, onEnded, onStart],
+    [expectedOrigin, onMessage, onEnded, onStart, onError],
   );
 
   useEffect(() => {

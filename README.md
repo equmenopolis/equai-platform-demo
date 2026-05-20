@@ -4,13 +4,23 @@ Reference integration for the [EQU AI Platform](https://platform.equ.ai): pick a
 
 ## Quick start
 
+**macOS / Linux**
 ```bash
-cp .env.example .env.local       # fill the values below
+cp .env.example .env.local       # fill in the platform values (see Environment variables)
 pnpm install
-pnpm dev                          # http://localhost:3000
+brew install cloudflared          # one-time, see Webhook tunnel for alternatives
+pnpm dev:tunnel                   # http://localhost:3000
 ```
 
-You also need a public HTTPS tunnel pointing at `localhost:3000` so the platform can deliver webhooks — see [Webhook tunnel](#webhook-tunnel) below. Without it the iframe still loads, but assessment results will never arrive.
+**Windows (PowerShell)**
+```powershell
+Copy-Item .env.example .env.local  # fill in the platform values (see Environment variables)
+pnpm install
+winget install Cloudflare.cloudflared  # one-time, see Webhook tunnel for alternatives
+pnpm dev:tunnel                        # http://localhost:3000
+```
+
+`pnpm dev:tunnel` boots a Cloudflare quick tunnel, captures the public URL, and starts `next dev` with `WEBHOOK_BASE_URL` set to that URL so the platform webhook is registered automatically. Use plain `pnpm dev` if you only want to iterate on UI without webhook delivery.
 
 ## Environment variables
 
@@ -20,32 +30,21 @@ Defined in `.env.local` (gitignored). **The demo is intended to run against prod
 |---|---|---|---|
 | `EQU_AI_PLATFORM_URL` | ✓ | `https://api.equ.ai` | EQU AI Platform API base URL |
 | `EQU_AI_PLATFORM_API_KEY` | ✓ | `gm_…` | Bearer token from `platform.equ.ai` |
-| `WEBHOOK_BASE_URL` | ✓ | `https://<tunnel-host>` | Public URL of this app. Webhook registration appends `/api/webhook` |
+| `WEBHOOK_BASE_URL` | auto¹ | `https://<tunnel-host>` | Public URL of this app. Webhook registration appends `/api/webhook` |
 | `WEBHOOK_SECRET` | — | _(leave blank)_ | Shared secret. Blank → a fresh one is generated per process at boot |
 | `NEXT_PUBLIC_LEARNER_WEBAPP_URL` | ✓ | `https://learner.intella.example.com` | InteLLA learner webapp URL, embedded as an iframe |
+
+¹ `pnpm dev:tunnel` sets `WEBHOOK_BASE_URL` from cloudflared's published URL at startup, so it can be left blank in `.env.local` for that path. Set it explicitly in `.env.local` only when you run plain `pnpm dev` against a tunnel you manage yourself, or when deploying.
 
 `instrumentation.ts` re-registers the webhook against `WEBHOOK_BASE_URL` on every boot. Restart `pnpm dev` after editing `.env.local`.
 
 ## Webhook tunnel
 
-The platform delivers `assessment_completed`, `session_ended`, and `session_error` events to `POST /api/webhook`. For local development that route needs to be reachable over HTTPS. Pick one of these tunnels and run it alongside `pnpm dev`.
+The platform delivers `assessment_completed`, `session_ended`, and `session_error` events to `POST /api/webhook`, so that route needs to be reachable over HTTPS during local development. `pnpm dev:tunnel` handles this end to end via Cloudflare's quick tunnel — no Cloudflare account, no manual copy-paste of URLs. The boot log line `[webhook] registered [...] -> <url>/api/webhook (secret …)` confirms the platform accepted the registration.
 
-**Option A — Cloudflare quick tunnel** (no account required):
+If you'd rather use a stable hostname (named Cloudflare tunnel, reserved ngrok domain, your own ingress, etc.), expose `localhost:3000` over HTTPS yourself, set the resulting URL as `WEBHOOK_BASE_URL` in `.env.local`, and start the demo with plain `pnpm dev`. Anything that publishes `localhost:3000` to a public HTTPS URL works.
 
-```bash
-brew install cloudflared
-cloudflared tunnel --url http://localhost:3000
-```
-
-**Option B — ngrok** (free account + authtoken):
-
-```bash
-brew install --cask ngrok
-ngrok config add-authtoken <token-from-dashboard.ngrok.com>   # first time only
-ngrok http 3000
-```
-
-Copy the printed `https://…` URL into `.env.local` as `WEBHOOK_BASE_URL`, then restart `pnpm dev`. The boot log line `[webhook] registered [...] -> <url>/api/webhook (secret …)` confirms the platform accepted the registration. Both tunnels assign a fresh URL on each launch — on restart, update `.env.local` and restart dev so the new URL is re-registered.
+**Resilience:** if the browser's SSE connection to `/api/sse/[sessionId]` drops mid-wait (Turbopack hot reload, sleep, network blip), the demo automatically falls back to polling `/api/webhook/[sessionId]` every few seconds and resumes delivery once the payload lands. The stored result is never lost server-side; the UI just picks it up via poll instead of push.
 
 ## Scenarios
 
