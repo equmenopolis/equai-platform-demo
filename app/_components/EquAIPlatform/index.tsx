@@ -22,8 +22,6 @@ const DEMO_USER_ID = ulid();
 
 const TOAST_MESSAGES = {
   sessionError: "The session ended with an error on the platform.",
-  sseConnectionLost:
-    "Connection lost — session results may not arrive in this tab.",
   learnerWebappMissing: "NEXT_PUBLIC_LEARNER_WEBAPP_URL is not configured.",
 } as const;
 
@@ -70,9 +68,7 @@ export const EquAIPlatform = () => {
     }
   }, []);
 
-  useWebhookSSE<WebhookPayload>(sessionId, handleWebhookEvent, () => {
-    toast.error(TOAST_MESSAGES.sseConnectionLost);
-  });
+  useWebhookSSE<WebhookPayload>(sessionId, handleWebhookEvent);
 
   const onClickStartConversation = useCallback(() => {
     setResult(null);
