@@ -40,27 +40,9 @@ Defined in `.env.local` (gitignored). **The demo is intended to run against prod
 
 ## Webhook tunnel
 
-The platform delivers `assessment_completed`, `session_ended`, and `session_error` events to `POST /api/webhook`. For local development that route needs to be reachable over HTTPS.
+The platform delivers `assessment_completed`, `session_ended`, and `session_error` events to `POST /api/webhook`, so that route needs to be reachable over HTTPS during local development. `pnpm dev:tunnel` handles this end to end via Cloudflare's quick tunnel — no Cloudflare account, no manual copy-paste of URLs. The boot log line `[webhook] registered [...] -> <url>/api/webhook (secret …)` confirms the platform accepted the registration.
 
-**Recommended: `pnpm dev:tunnel`** spawns Cloudflare's quick tunnel, captures the `https://*.trycloudflare.com` URL, and starts `next dev` with `WEBHOOK_BASE_URL` already set. One command, Ctrl+C tears down both. Requires `cloudflared` installed (`brew install cloudflared` on macOS/Linux; `winget install Cloudflare.cloudflared` on Windows). No Cloudflare account needed.
-
-If you'd rather run the tunnel manually — for instance to use a stable hostname or ngrok — set `WEBHOOK_BASE_URL` yourself in `.env.local` and start the demo with `pnpm dev`:
-
-```bash
-# Option A — Cloudflare quick tunnel, run in a separate terminal:
-cloudflared tunnel --url http://localhost:3000
-
-# Option B — ngrok (free account + authtoken):
-# macOS:
-brew install --cask ngrok
-# Windows (PowerShell):
-winget install ngrok.ngrok
-
-ngrok config add-authtoken <token-from-dashboard.ngrok.com>   # first time only
-ngrok http 3000
-```
-
-Copy the printed `https://…` URL into `.env.local` as `WEBHOOK_BASE_URL`, then run `pnpm dev`. The boot log line `[webhook] registered [...] -> <url>/api/webhook (secret …)` confirms the platform accepted the registration. Quick tunnels rotate URLs on each launch — restart `pnpm dev` after a tunnel restart so the new URL is re-registered.
+If you'd rather use a stable hostname (named Cloudflare tunnel, reserved ngrok domain, your own ingress, etc.), expose `localhost:3000` over HTTPS yourself, set the resulting URL as `WEBHOOK_BASE_URL` in `.env.local`, and start the demo with plain `pnpm dev`. Anything that publishes `localhost:3000` to a public HTTPS URL works.
 
 **Resilience:** if the browser's SSE connection to `/api/sse/[sessionId]` drops mid-wait (Turbopack hot reload, sleep, network blip), the demo automatically falls back to polling `/api/webhook/[sessionId]` every few seconds and resumes delivery once the payload lands. The stored result is never lost server-side; the UI just picks it up via poll instead of push.
 
