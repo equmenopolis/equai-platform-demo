@@ -13,7 +13,7 @@ import { LEARNER_WEBAPP_URL } from "@/app/_lib/const";
 import { DEMO_SCENARIOS, type DemoScenario } from "@/app/_lib/scenarios";
 import { Button } from "@/app/_components/ui/button";
 import IntellaFrame from "./IntellaFrame";
-import Result from "./Result";
+import Result, { type EndReason } from "./Result";
 import Scenario from "./Scenario";
 
 // Stable per-page-load identifier sent to POST /api/sessions. Replace with your
@@ -30,7 +30,7 @@ export const EquAIPlatform = () => {
     DEMO_SCENARIOS[0],
   );
   const [result, setResult] = useState<AssessmentResult | null>(null);
-  const [endedWithoutResults, setEndedWithoutResults] = useState(false);
+  const [endReason, setEndReason] = useState<EndReason | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [src, setSrc] = useState<string | null>(null);
 
@@ -46,7 +46,7 @@ export const EquAIPlatform = () => {
     if (payload.type === "assessment_completed") {
       startTransition(() => {
         setResult(payload.data);
-        setEndedWithoutResults(false);
+        setEndReason(null);
         setSessionId(null);
       });
       return;
@@ -54,14 +54,18 @@ export const EquAIPlatform = () => {
 
     if (payload.type === "session_error") {
       toast.error(TOAST_MESSAGES.sessionError);
-      setSessionId(null);
+      startTransition(() => {
+        setSrc(null);
+        setEndReason("ended-early");
+        setSessionId(null);
+      });
       return;
     }
 
     if (payload.type === "session_ended") {
       if (!activeScenarioRef.current.producesResults) {
         startTransition(() => {
-          setEndedWithoutResults(true);
+          setEndReason("no-analysis");
           setSessionId(null);
         });
       }
@@ -72,7 +76,7 @@ export const EquAIPlatform = () => {
 
   const onClickStartConversation = useCallback(() => {
     setResult(null);
-    setEndedWithoutResults(false);
+    setEndReason(null);
     setSessionId(null);
     activeScenarioRef.current = chosenScenario;
     if (!LEARNER_WEBAPP_URL) {
@@ -102,9 +106,21 @@ export const EquAIPlatform = () => {
     startTransition(() => {
       setSrc(null);
       if (!activeScenarioRef.current.producesResults) {
-        setEndedWithoutResults(true);
+        setEndReason("no-analysis");
         setSessionId(null);
       }
+    });
+  }, []);
+
+  const onConversationEndedEarly = useCallback(() => {
+    // SESSION_ERROR covers manual termination by the user inside the iframe
+    // as well as platform timeouts and general errors. In all three cases
+    // no `assessment_completed` will arrive, so close the iframe and stop
+    // waiting on the SSE/poll loop.
+    startTransition(() => {
+      setSrc(null);
+      setEndReason("ended-early");
+      setSessionId(null);
     });
   }, []);
 
@@ -113,7 +129,7 @@ export const EquAIPlatform = () => {
   }, []);
 
   const showResult =
-    !src && (result !== null || endedWithoutResults || sessionId !== null);
+    !src && (result !== null || endReason !== null || sessionId !== null);
 
   return (
     <motion.div
@@ -139,14 +155,17 @@ export const EquAIPlatform = () => {
             Start Conversation
           </Button>
           <AnimatePresence>
-            {src && <IntellaFrame src={src} onEnded={onConversationEnded} />}
+            {src && (
+              <IntellaFrame
+                src={src}
+                onEnded={onConversationEnded}
+                onError={onConversationEndedEarly}
+              />
+            )}
           </AnimatePresence>
           <AnimatePresence>
             {showResult && (
-              <Result
-                result={result}
-                endedWithoutResults={endedWithoutResults}
-              />
+              <Result result={result} endReason={endReason} />
             )}
           </AnimatePresence>
         </div>

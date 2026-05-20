@@ -30,10 +30,23 @@ const RADAR_METRIC_KEYS: RadarMetricKey[] = [
 
 const RADAR_MAX = 6;
 
+export type EndReason = "no-analysis" | "ended-early";
+
 type Props = {
   result: AssessmentResult | null;
-  endedWithoutResults: boolean;
+  endReason: EndReason | null;
   title?: string;
+};
+
+const ENDED_COPY: Record<EndReason, { heading: string; body: string }> = {
+  "no-analysis": {
+    heading: "Conversation complete",
+    body: "This scenario isn't configured to produce an analysis. Try the Speaking test or Can-Do lesson to see assessment results.",
+  },
+  "ended-early": {
+    heading: "Conversation ended early",
+    body: "The session was stopped before an assessment could be generated. Start a new session to try again.",
+  },
 };
 
 type StatePanelProps = {
@@ -101,19 +114,19 @@ const LoadingState = () => (
   </StatePanel>
 );
 
-const NoResultsState = () => (
-  <StatePanel
-    minHeight={200}
-    className="border-border bg-muted/40"
-    ariaLabel="Conversation complete, no analysis available"
-  >
-    <p className="text-lg font-medium">Conversation complete</p>
-    <p className="text-center text-sm text-muted-foreground">
-      This scenario isn&apos;t configured to produce an analysis. Try the
-      Speaking test or Can-Do lesson to see assessment results.
-    </p>
-  </StatePanel>
-);
+const EndedState = ({ reason }: { reason: EndReason }) => {
+  const copy = ENDED_COPY[reason];
+  return (
+    <StatePanel
+      minHeight={200}
+      className="border-border bg-muted/40"
+      ariaLabel={copy.heading}
+    >
+      <p className="text-lg font-medium">{copy.heading}</p>
+      <p className="text-center text-sm text-muted-foreground">{copy.body}</p>
+    </StatePanel>
+  );
+};
 
 const JsonBlock = ({ value }: { value: unknown }) => (
   <pre className="m-0 overflow-x-auto whitespace-pre rounded-lg border border-border bg-muted/40 p-4 font-mono text-xs leading-relaxed">
@@ -136,7 +149,7 @@ const toEvaluationScores = (result: AssessmentResult): EvaluationScore[] => {
 
 const Result = ({
   result,
-  endedWithoutResults,
+  endReason,
   title = "Evaluation Results",
 }: Props) => {
   const evaluationScores = useMemo<EvaluationScore[]>(
@@ -176,8 +189,8 @@ const Result = ({
         )}
       </div>
 
-      {!result && endedWithoutResults && <NoResultsState />}
-      {!result && !endedWithoutResults && <LoadingState />}
+      {!result && endReason && <EndedState reason={endReason} />}
+      {!result && !endReason && <LoadingState />}
 
       {result && hasCefr && (
         <div className="flex flex-col gap-2">
