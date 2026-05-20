@@ -60,9 +60,7 @@ const IntellaFrame = ({
             onEnded?.();
             break;
           case "SESSION_ERROR":
-            // Fires for in-iframe manual termination as well as platform
-            // timeouts and general errors. Treat the conversation as done
-            // and stop waiting for an assessment that will never arrive.
+            // Manual termination, timeout, or platform error — no assessment will arrive.
             onError?.();
             break;
           default:

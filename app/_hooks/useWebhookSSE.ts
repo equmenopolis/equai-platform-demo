@@ -4,13 +4,7 @@ import { useEffect, useRef } from "react";
 
 const POLL_INTERVAL_MS = 5000;
 
-// Subscribes to /api/sse/[sessionId] for live webhook delivery. If the SSE
-// connection drops (Turbopack reload, network blip, idle reset), we switch
-// transparently to polling /api/webhook/[sessionId] every few seconds and
-// surface any stored payload through the same callback. The result the user
-// is waiting for is safely stored server-side, so a dropped SSE no longer
-// strands the demo's UI. The hook stops as soon as the consumer clears
-// `sessionId`.
+// Subscribes to SSE for webhook delivery; falls back to polling /api/webhook/[sessionId] when SSE drops.
 const useWebhookSSE = <T = unknown>(
   sessionId: string | null,
   onMessage: (data: T) => void,

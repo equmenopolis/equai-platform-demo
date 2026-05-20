@@ -113,10 +113,7 @@ export const EquAIPlatform = () => {
   }, []);
 
   const onConversationEndedEarly = useCallback(() => {
-    // SESSION_ERROR covers manual termination by the user inside the iframe
-    // as well as platform timeouts and general errors. In all three cases
-    // no `assessment_completed` will arrive, so close the iframe and stop
-    // waiting on the SSE/poll loop.
+    // Manual cancel / timeout / platform error — no assessment will arrive.
     startTransition(() => {
       setSrc(null);
       setEndReason("ended-early");

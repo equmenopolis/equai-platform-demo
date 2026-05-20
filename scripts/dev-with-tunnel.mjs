@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-// Boots cloudflared, waits for the public *.trycloudflare.com URL, then
-// runs `next dev` with WEBHOOK_BASE_URL set to that URL so the platform
-// webhook is registered against it at startup. Ctrl+C tears down both.
+// Boots cloudflared and runs next dev with WEBHOOK_BASE_URL set to the published tunnel URL.
 
 import { spawn } from "node:child_process";
 
