@@ -32,7 +32,7 @@ Defined in `.env.local` (gitignored). **The demo is intended to run against prod
 | `EQU_AI_PLATFORM_API_KEY` | ✓ | `gm_…` | Bearer token from `platform.equ.ai` |
 | `WEBHOOK_BASE_URL` | auto¹ | `https://<tunnel-host>` | Public URL of this app. Webhook registration appends `/api/webhook` |
 | `WEBHOOK_SECRET` | — | _(leave blank)_ | Shared secret. Blank → a fresh one is generated per process at boot |
-| `NEXT_PUBLIC_LEARNER_WEBAPP_URL` | ✓ | `https://learner.intella.example.com` | InteLLA learner webapp URL, embedded as an iframe |
+| `NEXT_PUBLIC_LEARNER_WEBAPP_URL` | ✓ | `https://speaking.langx.ai/` | InteLLA learner webapp URL, embedded as an iframe |
 
 ¹ `pnpm dev:tunnel` sets `WEBHOOK_BASE_URL` from cloudflared's published URL at startup, so it can be left blank in `.env.local` for that path. Set it explicitly in `.env.local` only when you run plain `pnpm dev` against a tunnel you manage yourself, or when deploying.
 
