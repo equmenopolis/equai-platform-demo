@@ -55,16 +55,17 @@ export const EquAIPlatform = () => {
     }
 
     if (payload.type === "session_error") {
-      // If the iframe already surfaced the early termination, the panel is
-      // up and the state is cleared — skip the toast to avoid double-notify.
+      // Only toast when the iframe didn't already signal the end (rare path:
+      // platform-side failure while iframe is unresponsive). Otherwise the
+      // "ended-early" panel below is the canonical feedback.
       if (!endedEarlyFromIframeRef.current) {
         toast.error(TOAST_MESSAGES.sessionError);
-        startTransition(() => {
-          setSrc(null);
-          setEndReason("ended-early");
-          setSessionId(null);
-        });
       }
+      startTransition(() => {
+        setSrc(null);
+        setEndReason("ended-early");
+        setSessionId(null);
+      });
       return;
     }
 
@@ -106,6 +107,11 @@ export const EquAIPlatform = () => {
     // SESSION_ENDED is the terminal signal — surface the "no analysis"
     // panel immediately rather than waiting for the platform's
     // session_ended webhook, which may lag or be unreliable.
+    //
+    // We also mark the iframe-end ref: if a later webhook session_error
+    // arrives (manual termination, timeout), we already conveyed the end
+    // here and the panel will show it, so a toast would double-notify.
+    endedEarlyFromIframeRef.current = true;
     startTransition(() => {
       setSrc(null);
       if (!activeScenarioRef.current.producesResults) {

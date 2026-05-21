@@ -25,14 +25,6 @@ const Header = () => {
               SkillBoost Academy
             </span>
           </Link>
-          <nav className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Equ AI Platform
-            </Link>
-          </nav>
         </div>
       </header>
       {title && (
