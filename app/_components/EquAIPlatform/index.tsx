@@ -9,7 +9,6 @@ import type { AssessmentResult, WebhookPayload } from "@/app/_dtos";
 import useSession from "@/app/_hooks/useSession";
 import { useLoading } from "@/app/_hooks/useLoading";
 import useWebhookSSE from "@/app/_hooks/useWebhookSSE";
-import { LEARNER_WEBAPP_URL } from "@/app/_lib/const";
 import { DEMO_SCENARIOS, type DemoScenario } from "@/app/_lib/scenarios";
 import { Button } from "@/app/_components/ui/button";
 import IntellaFrame from "./IntellaFrame";
@@ -22,7 +21,6 @@ const DEMO_USER_ID = ulid();
 
 const TOAST_MESSAGES = {
   sessionError: "The session ended with an error on the platform.",
-  learnerWebappMissing: "NEXT_PUBLIC_LEARNER_WEBAPP_URL is not configured.",
 } as const;
 
 export const EquAIPlatform = () => {
@@ -37,6 +35,10 @@ export const EquAIPlatform = () => {
   // Pinned to the scenario in flight so the webhook handler doesn't follow
   // dropdown changes mid-session.
   const activeScenarioRef = useRef<DemoScenario>(chosenScenario);
+
+  // True once the iframe has already signaled an early termination, so the
+  // matching webhook session_error that follows doesn't double-notify.
+  const endedEarlyFromIframeRef = useRef(false);
 
   const { create: createSession } = useSession();
   const { isLoading: isSessionLoading, withLoading: withSessionLoading } =
@@ -53,12 +55,16 @@ export const EquAIPlatform = () => {
     }
 
     if (payload.type === "session_error") {
-      toast.error(TOAST_MESSAGES.sessionError);
-      startTransition(() => {
-        setSrc(null);
-        setEndReason("ended-early");
-        setSessionId(null);
-      });
+      // If the iframe already surfaced the early termination, the panel is
+      // up and the state is cleared — skip the toast to avoid double-notify.
+      if (!endedEarlyFromIframeRef.current) {
+        toast.error(TOAST_MESSAGES.sessionError);
+        startTransition(() => {
+          setSrc(null);
+          setEndReason("ended-early");
+          setSessionId(null);
+        });
+      }
       return;
     }
 
@@ -79,17 +85,14 @@ export const EquAIPlatform = () => {
     setEndReason(null);
     setSessionId(null);
     activeScenarioRef.current = chosenScenario;
-    if (!LEARNER_WEBAPP_URL) {
-      toast.error(TOAST_MESSAGES.learnerWebappMissing);
-      return;
-    }
+    endedEarlyFromIframeRef.current = false;
     withSessionLoading(
       async () => {
         const response = await createSession({
           scenarioId: chosenScenario.id,
           userId: DEMO_USER_ID,
         });
-        setSrc(`${LEARNER_WEBAPP_URL}/call?nonce=${response.nonce}`);
+        setSrc(response.conversation_url);
         setSessionId(response.session.id);
       },
       (error) => {
@@ -114,6 +117,7 @@ export const EquAIPlatform = () => {
 
   const onConversationEndedEarly = useCallback(() => {
     // Manual cancel / timeout / platform error — no assessment will arrive.
+    endedEarlyFromIframeRef.current = true;
     startTransition(() => {
       setSrc(null);
       setEndReason("ended-early");

@@ -2,6 +2,7 @@
   "name": "equai-platform-demo",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "dev:tunnel": "node scripts/dev-with-tunnel.mjs",

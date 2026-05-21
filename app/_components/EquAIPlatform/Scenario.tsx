@@ -57,7 +57,9 @@ const Scenario = ({
           aria-label="Select your scenario"
           className="w-full sm:w-80"
         >
-          <SelectValue placeholder="Pick a scenario…" />
+          <SelectValue placeholder="Pick a scenario…">
+            {() => chosenScenario.label}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {DEMO_SCENARIOS.map((scenario) => (

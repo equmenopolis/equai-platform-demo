@@ -12,15 +12,15 @@ export type CreateSessionRequestSchema = z.infer<
 export const CreateSessionResponseSchema = z.object({
   session: z.object({
     id: z.string(),
-    scenarioId: z.string().nullable(),
-    userId: z.string(),
-    language: z.string(),
-    startedAt: z.number().nullable(),
-    endedAt: z.number().nullable(),
-    createdAt: z.date(),
+    scenario_id: z.string().nullable(),
+    user_id: z.string().nullable(),
+    language: z.string().nullable(),
+    started_at: z.number().nullable(),
+    ended_at: z.number().nullable(),
+    created_at: z.number().nullable(),
   }),
   nonce: z.string(),
-  conversationUrl: z.string(),
+  conversation_url: z.string(),
   status: z.string(),
 });
 

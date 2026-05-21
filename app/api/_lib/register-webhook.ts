@@ -17,16 +17,17 @@ type WebhookType = (typeof TARGET_TYPES)[number];
 export async function registerWebhook(
   webhookBaseUrl: string | undefined = process.env.WEBHOOK_BASE_URL,
 ): Promise<void> {
-  const platformUrl = process.env.EQU_AI_PLATFORM_URL;
+  const platformUrl =
+    process.env.EQU_AI_PLATFORM_URL ?? "https://api.equ.ai";
   const apiKey = process.env.EQU_AI_PLATFORM_API_KEY;
 
   if (!webhookBaseUrl) {
     console.log("[webhook] WEBHOOK_BASE_URL not set - skipping registration");
     return;
   }
-  if (!platformUrl || !apiKey) {
+  if (!apiKey) {
     console.warn(
-      "[webhook] EQU_AI_PLATFORM_URL or EQU_AI_PLATFORM_API_KEY not set - skipping registration",
+      "[webhook] EQU_AI_PLATFORM_API_KEY not set - skipping registration",
     );
     return;
   }
