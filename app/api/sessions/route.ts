@@ -1,3 +1,6 @@
+// POST /api/sessions — server-side proxy that injects the EQU API key and
+// returns the platform's { session, nonce } payload. The browser never sees
+// the API key; the nonce it does receive is what authorises the iframe URL.
 import type { NextRequest } from "next/server";
 import { createSessionRequestSchema } from "@/app/_dtos";
 import { errorToResponse } from "../_lib/app-error";

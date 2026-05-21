@@ -20,6 +20,9 @@ export class SessionsRepository {
     };
   }
 
+  // EQU session bootstrap: scenario_id selects the platform flow; the returned
+  // nonce is the one-time credential the browser embeds in the learner-webapp
+  // iframe URL to authenticate the conversation.
   async create(
     data: CreateSessionRequestSchema,
   ): Promise<CreateSessionResponse> {

@@ -1,3 +1,5 @@
+// GET /api/sse/:sessionId — Server-Sent Events stream that forwards EQU
+// webhook payloads (received at /api/webhook) to the browser in real time.
 import type { NextRequest } from "next/server";
 import { addSseClient, removeSseClient } from "../../_lib/sse-store";
 

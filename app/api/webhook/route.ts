@@ -1,3 +1,6 @@
+// POST /api/webhook — receiver for EQU AI Platform callbacks. Authenticates
+// each delivery against the shared secret registered at boot, stores the
+// payload by sessionId, and notifies any browser subscribed via SSE.
 import { timingSafeEqual } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { WebhookPayloadSchema } from "@/app/_dtos";

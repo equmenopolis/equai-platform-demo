@@ -1,5 +1,9 @@
 import type { WebhookPayload } from "@/app/_dtos";
 
+// Bridges EQU webhook deliveries to the browser. Payloads land here via
+// POST /api/webhook, then fan out over SSE (or a per-session poll fallback)
+// keyed by sessionId.
+//
 // In-memory state, intentional for the demo. Production deployments should
 // persist webhook results in a database to survive restarts and to bound memory.
 //
