@@ -24,15 +24,20 @@ pnpm dev:tunnel                        # http://localhost:3000
 
 ## Environment variables
 
-Defined in `.env.local`. **The demo is intended to run against production**; substitute staging URLs only for internal testing.
+Defined in `.env.local` (gitignored). The demo targets `https://api.equ.ai` by default and embeds the iframe at the `conversation_url` returned by the platform — partners only need to provide their API key.
 
-| Variable | Required | Example (production) | Description |
+| Variable | Required | Example | Description |
 |---|---|---|---|
-| `EQU_AI_PLATFORM_URL` | ✓ | `https://api.equ.ai` | EQU AI Platform API base URL |
 | `EQU_AI_PLATFORM_API_KEY` | ✓ | `gm_…` | Bearer token from `platform.equ.ai` |
-| `WEBHOOK_BASE_URL` | ✓ | `https://<tunnel-host>` | Public URL of this app. Webhook registration appends `/api/webhook` |
+| `WEBHOOK_BASE_URL` | auto¹ | `https://<tunnel-host>` | Public URL of this app. Webhook registration appends `/api/webhook` |
 | `WEBHOOK_SECRET` | — | _(leave blank)_ | Shared secret. Blank → a fresh one is generated per process at boot |
-| `NEXT_PUBLIC_LEARNER_WEBAPP_URL` | ✓ | `https://learner.intella.example.com` | InteLLA learner webapp URL, embedded as an iframe |
+
+¹ `pnpm dev:tunnel` sets `WEBHOOK_BASE_URL` from cloudflared's published URL at startup, so it can be left blank in `.env.local` for that path. Set it explicitly only when you run plain `pnpm dev` against a tunnel you manage yourself, or when deploying.
+
+**Internal overrides** (partners do not need to set these):
+
+- `EQU_AI_PLATFORM_URL` — defaults to `https://api.equ.ai`; set to `https://stg.api.equ.ai` for staging tests.
+- `LEARNER_WEBAPP_URL` — when set, replaces the **origin** of the `conversation_url` returned by the platform. Path and query (`?nonce=…`) are preserved. Useful when testing against a learner-webapp preview channel that has not yet been merged into the deploy the platform points to.
 
 `instrumentation.ts` re-registers the webhook against `WEBHOOK_BASE_URL` on every boot. Restart `pnpm dev` after editing `.env.local`.
 
@@ -76,8 +81,8 @@ Defined in `app/_lib/scenarios.ts`. Edit that file to swap in IDs supplied by yo
 
 ## Flow
 
-1. User picks a scenario and clicks **Start Conversation** → `POST /api/sessions` proxies to the platform and returns `{ session, nonce }`.
-2. Demo embeds `${NEXT_PUBLIC_LEARNER_WEBAPP_URL}/call?nonce=…` as an iframe.
+1. User picks a scenario and clicks **Start Conversation** → `POST /api/sessions` proxies to the platform and returns `{ session, nonce, conversation_url }`.
+2. Demo embeds the `conversation_url` as an iframe.
 3. iframe emits `SESSION_STARTED` / `SESSION_ENDED` / `SESSION_ERROR` via `postMessage`; the demo closes the iframe on `SESSION_ENDED`.
 4. Platform calls `POST /api/webhook` with `assessment_completed` (scored scenarios) or `session_ended` (always).
 5. Demo persists payloads in an in-memory store and fans them out to the browser via `GET /api/sse/[sessionId]`.
