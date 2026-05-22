@@ -38,8 +38,9 @@ const onTunnelData = (chunk) => {
   url = match[0];
   process.stderr.write(`\n[dev-with-tunnel] WEBHOOK_BASE_URL=${url}\n\n`);
 
-  next = spawn(isWindows ? "next.cmd" : "next", ["dev"], {
+  next = spawn("next", ["dev"], {
     stdio: "inherit",
+    shell: isWindows,
     env: { ...process.env, WEBHOOK_BASE_URL: url },
   });
   next.on("exit", (code) => {
