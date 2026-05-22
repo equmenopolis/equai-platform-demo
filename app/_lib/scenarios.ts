@@ -7,20 +7,20 @@ export interface DemoScenario {
 
 export const DEMO_SCENARIOS: readonly DemoScenario[] = [
   {
-    id: "develop/con-school-10min-gemini-1",
+    id: "conversation-school-10min-6",
     label: "Free conversation",
     description: "An open, unscored practice conversation with InteLLA.",
     producesResults: false,
   },
   {
-    id: "develop/speaking-test-1",
+    id: "speaking-test-2",
     label: "Speaking test",
     description:
       "Measures the ability to maintain a spontaneous conversation, scored on the seven-point CEFR scale.",
     producesResults: true,
   },
   {
-    id: "develop/S1_T1_about-me",
+    id: "HS1_my-house1",
     label: "Can-Do lesson",
     description:
       "Returns a Can-Do checklist of “I can…” statements showing which competencies the learner demonstrated.",

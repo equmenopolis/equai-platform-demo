@@ -34,11 +34,6 @@ Defined in `.env.local` (gitignored). The demo targets `https://api.equ.ai` by d
 
 ¹ `pnpm dev:tunnel` sets `WEBHOOK_BASE_URL` from cloudflared's published URL at startup, so it can be left blank in `.env.local` for that path. Set it explicitly only when you run plain `pnpm dev` against a tunnel you manage yourself, or when deploying.
 
-**Internal overrides** (partners do not need to set these):
-
-- `EQU_AI_PLATFORM_URL` — defaults to `https://api.equ.ai`; set to `https://stg.api.equ.ai` for staging tests.
-- `LEARNER_WEBAPP_URL` — when set, replaces the **origin** of the `conversation_url` returned by the platform. Path and query (`?nonce=…`) are preserved. Useful when testing against a learner-webapp preview channel that has not yet been merged into the deploy the platform points to.
-
 `instrumentation.ts` re-registers the webhook against `WEBHOOK_BASE_URL` on every boot. Restart `pnpm dev` after editing `.env.local`.
 
 ## Webhook tunnel

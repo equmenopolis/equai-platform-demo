@@ -3,6 +3,7 @@
 // becomes the Bearer token EQU includes on every callback for the receiver
 // to verify.
 import type { EquApiResponse } from "@/app/_dtos";
+import { PLATFORM_URL } from "./platform";
 import { WEBHOOK_SECRET, webhookSecretFingerprint } from "./webhook-secret";
 
 const PLATFORM_FETCH_TIMEOUT_MS = 10_000;
@@ -17,8 +18,6 @@ type WebhookType = (typeof TARGET_TYPES)[number];
 export async function registerWebhook(
   webhookBaseUrl: string | undefined = process.env.WEBHOOK_BASE_URL,
 ): Promise<void> {
-  const platformUrl =
-    process.env.EQU_AI_PLATFORM_URL ?? "https://api.equ.ai";
   const apiKey = process.env.EQU_AI_PLATFORM_API_KEY;
 
   if (!webhookBaseUrl) {
@@ -42,7 +41,7 @@ export async function registerWebhook(
   ) as Record<WebhookType, { url: string; method: "POST"; api_key: string }>;
 
   try {
-    const response = await fetch(`${platformUrl}/v1/webhooks`, {
+    const response = await fetch(`${PLATFORM_URL}/v1/webhooks`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
