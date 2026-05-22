@@ -5,8 +5,10 @@ import { spawn } from "node:child_process";
 
 const TRYCLOUDFLARE = /https:\/\/[a-z0-9-]+\.trycloudflare\.com/;
 
+const isWindows = process.platform === "win32";
+
 const tunnel = spawn(
-  "cloudflared",
+  isWindows ? "cloudflared.exe" : "cloudflared",
   ["tunnel", "--url", "http://localhost:3000", "--no-autoupdate"],
   { stdio: ["ignore", "pipe", "pipe"] },
 );
@@ -15,8 +17,9 @@ tunnel.on("error", (err) => {
   if (err.code === "ENOENT") {
     process.stderr.write(
       "cloudflared not found. Install it first:\n" +
-        "  macOS:  brew install cloudflared\n" +
-        "  Linux:  https://github.com/cloudflare/cloudflared/releases\n",
+        "  macOS:    brew install cloudflared\n" +
+        "  Windows:  winget install Cloudflare.cloudflared\n" +
+        "  Linux:    https://github.com/cloudflare/cloudflared/releases\n",
     );
   } else {
     process.stderr.write(`cloudflared spawn error: ${err.message}\n`);
@@ -35,7 +38,7 @@ const onTunnelData = (chunk) => {
   url = match[0];
   process.stderr.write(`\n[dev-with-tunnel] WEBHOOK_BASE_URL=${url}\n\n`);
 
-  next = spawn("next", ["dev"], {
+  next = spawn(isWindows ? "next.cmd" : "next", ["dev"], {
     stdio: "inherit",
     env: { ...process.env, WEBHOOK_BASE_URL: url },
   });
