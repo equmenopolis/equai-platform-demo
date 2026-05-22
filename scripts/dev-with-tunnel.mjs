@@ -8,9 +8,9 @@ const TRYCLOUDFLARE = /https:\/\/[a-z0-9-]+\.trycloudflare\.com/;
 const isWindows = process.platform === "win32";
 
 const tunnel = spawn(
-  isWindows ? "cloudflared.exe" : "cloudflared",
+  "cloudflared",
   ["tunnel", "--url", "http://localhost:3000", "--no-autoupdate"],
-  { stdio: ["ignore", "pipe", "pipe"] },
+  { stdio: ["ignore", "pipe", "pipe"], shell: isWindows },
 );
 
 tunnel.on("error", (err) => {
