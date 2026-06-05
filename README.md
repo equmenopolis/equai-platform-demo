@@ -31,6 +31,7 @@ Defined in `.env.local` (gitignored). The demo targets `https://api.equ.ai` by d
 | `EQU_AI_PLATFORM_API_KEY` | ✓ | `gm_…` | Bearer token from `platform.equ.ai` |
 | `WEBHOOK_BASE_URL` | auto¹ | `https://<tunnel-host>` | Public URL of this app. Webhook registration appends `/api/webhook` |
 | `WEBHOOK_SECRET` | — | _(leave blank)_ | Shared secret. Blank → a fresh one is generated per process at boot |
+| `DEV_EXTRA_ORIGINS` | — | `192.168.1.20:3000,demo.example.com` | Extra hostnames allowed to reach the dev server. See [Accessing the dev server from another device](#accessing-the-dev-server-from-another-device) |
 
 ¹ `pnpm dev:tunnel` sets `WEBHOOK_BASE_URL` from cloudflared's published URL at startup, so it can be left blank in `.env.local` for that path. Set it explicitly only when you run plain `pnpm dev` against a tunnel you manage yourself, or when deploying.
 
@@ -61,6 +62,12 @@ ngrok http 3000
 Copy the printed `https://…` URL into `.env.local` as `WEBHOOK_BASE_URL`, then run `pnpm dev`. The boot log line `[webhook] registered [...] -> <url>/api/webhook (secret …)` confirms the platform accepted the registration. Quick tunnels rotate URLs on each launch — restart `pnpm dev` after a tunnel restart so the new URL is re-registered.
 
 **Resilience:** if the browser's SSE connection to `/api/sse/[sessionId]` drops mid-wait (Turbopack hot reload, sleep, network blip), the demo automatically falls back to polling `/api/webhook/[sessionId]` every few seconds and resumes delivery once the payload lands. The stored result is never lost server-side; the UI just picks it up via poll instead of push.
+
+### Accessing the dev server from another device
+
+Next.js blocks cross-origin requests to dev-only assets (HMR, JS chunks, RSC payloads) from any host other than `localhost`. If you open the demo through a tunnel — for partner demos, mobile/tablet QA, or remote review — and only the page header renders while the rest stays blank, that's this protection kicking in.
+
+`next.config.ts` already whitelists the tunnel hosts the README documents (`*.trycloudflare.com` and every ngrok domain). For anything outside that — a LAN IP for on-device testing, a named Cloudflare tunnel with a custom domain, or a different tunnel service — set `DEV_EXTRA_ORIGINS` in `.env.local` to a comma-separated list of hostnames and restart `pnpm dev`.
 
 ## Scenarios
 
