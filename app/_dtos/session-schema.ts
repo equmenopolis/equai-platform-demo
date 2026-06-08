@@ -2,7 +2,6 @@ import { z } from "zod";
 
 export const createSessionRequestSchema = z.object({
   scenarioId: z.string().min(1, "scenarioId is required"),
-  userId: z.string().min(1, "userId is required"),
 });
 
 export type CreateSessionRequestSchema = z.infer<

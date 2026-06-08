@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type {
   CreateSessionRequestSchema,
   CreateSessionResponse,
@@ -19,6 +20,15 @@ export class SessionsRepository {
     };
   }
 
+  // Deterministic per-API-key user id derived from the SHA-256 digest of the
+  // key, so the cleartext value never leaves the server.
+  private get stableUserId(): string {
+    return `demo_${createHash("sha256")
+      .update(this.apiKey)
+      .digest("hex")
+      .slice(0, 24)}`;
+  }
+
   // EQU session bootstrap: scenario_id selects the platform flow; the returned
   // nonce is the one-time credential the browser embeds in the learner-webapp
   // iframe URL to authenticate the conversation.
@@ -38,7 +48,7 @@ export class SessionsRepository {
       headers: this.headers,
       body: JSON.stringify({
         scenario_id: data.scenarioId,
-        user_id: data.userId,
+        user_id: this.stableUserId,
         // Send `false` for production sessions; required by the platform.
         dummy_intella: false,
       }),

@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { startTransition, useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ulid } from "ulidx";
 import type { AssessmentResult, WebhookPayload } from "@/app/_dtos";
 import useSession from "@/app/_hooks/useSession";
 import { useLoading } from "@/app/_hooks/useLoading";
@@ -14,10 +13,6 @@ import { Button } from "@/app/_components/ui/button";
 import IntellaFrame from "./IntellaFrame";
 import Result, { type EndReason } from "./Result";
 import Scenario from "./Scenario";
-
-// Stable per-page-load identifier sent to POST /api/sessions. Replace with your
-// authenticated user's identifier; the platform echoes it in webhook payloads.
-const DEMO_USER_ID = ulid();
 
 const TOAST_MESSAGES = {
   sessionError: "The session ended with an error on the platform.",
@@ -91,7 +86,6 @@ export const EquAIPlatform = () => {
       async () => {
         const response = await createSession({
           scenarioId: chosenScenario.id,
-          userId: DEMO_USER_ID,
         });
         setSrc(response.conversation_url);
         setSessionId(response.session.id);
