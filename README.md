@@ -75,9 +75,9 @@ Defined in `app/_lib/scenarios.ts`. Edit that file to swap in IDs supplied by yo
 
 | Label | Scenario ID | Produces results |
 |---|---|---|
-| Free conversation | `develop/con-school-10min-gemini-1` | No |
-| Speaking test | `develop/speaking-test-1` | CEFR |
-| Can-Do lesson | `develop/S1_T1_about-me` | Can-Do + review questions |
+| Free conversation | `conversation-school-10min-6` | No |
+| Speaking test | `speaking-test-2` | CEFR |
+| Can-Do lesson | `HS1_my-house1` | Can-Do + review questions |
 
 `producesResults: false` makes the demo treat the iframe's `SESSION_ENDED` postMessage as terminal, so a free-conversation user sees the "no analysis" panel immediately rather than waiting for a webhook that will never carry an assessment.
 

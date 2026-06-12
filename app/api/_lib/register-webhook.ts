@@ -3,7 +3,11 @@
 // becomes the Bearer token EQU includes on every callback for the receiver
 // to verify.
 import type { EquApiResponse } from "@/app/_dtos";
-import { PLATFORM_URL } from "./platform";
+import {
+  PLATFORM_API_KEY,
+  PLATFORM_API_KEY_VAR,
+  PLATFORM_URL,
+} from "./platform";
 import { WEBHOOK_SECRET, webhookSecretFingerprint } from "./webhook-secret";
 
 const PLATFORM_FETCH_TIMEOUT_MS = 10_000;
@@ -18,7 +22,7 @@ type WebhookType = (typeof TARGET_TYPES)[number];
 export async function registerWebhook(
   webhookBaseUrl: string | undefined = process.env.WEBHOOK_BASE_URL,
 ): Promise<void> {
-  const apiKey = process.env.EQU_AI_PLATFORM_API_KEY;
+  const apiKey = PLATFORM_API_KEY;
 
   if (!webhookBaseUrl) {
     console.log("[webhook] WEBHOOK_BASE_URL not set - skipping registration");
@@ -26,7 +30,7 @@ export async function registerWebhook(
   }
   if (!apiKey) {
     console.warn(
-      "[webhook] EQU_AI_PLATFORM_API_KEY not set - skipping registration",
+      `[webhook] ${PLATFORM_API_KEY_VAR} not set - skipping registration`,
     );
     return;
   }
@@ -61,7 +65,7 @@ export async function registerWebhook(
 
     if (response.status === 401) {
       console.warn(
-        "[webhook] registration failed: 401 - check EQU_AI_PLATFORM_API_KEY",
+        `[webhook] registration failed: 401 - check ${PLATFORM_API_KEY_VAR}`,
       );
       return;
     }

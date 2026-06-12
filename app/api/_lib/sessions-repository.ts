@@ -5,13 +5,17 @@ import type {
   EquApiResponse,
 } from "@/app/_dtos";
 import { AppError } from "./app-error";
-import { PLATFORM_URL } from "./platform";
+import {
+  PLATFORM_API_KEY,
+  PLATFORM_API_KEY_VAR,
+  PLATFORM_URL,
+} from "./platform";
 
 // Default timeout for outbound HTTP requests to the EQU AI Platform.
 const PLATFORM_FETCH_TIMEOUT_MS = 10_000;
 
 export class SessionsRepository {
-  private readonly apiKey = process.env.EQU_AI_PLATFORM_API_KEY ?? "";
+  private readonly apiKey = PLATFORM_API_KEY;
 
   private get headers() {
     return {
@@ -37,7 +41,7 @@ export class SessionsRepository {
   ): Promise<CreateSessionResponse> {
     if (!this.apiKey) {
       throw new AppError(
-        "EQU_AI_PLATFORM_API_KEY not configured",
+        `${PLATFORM_API_KEY_VAR} not configured`,
         "PLATFORM_NOT_CONFIGURED",
         500,
       );

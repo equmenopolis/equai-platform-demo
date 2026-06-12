@@ -8,7 +8,7 @@ import type { AssessmentResult, WebhookPayload } from "@/app/_dtos";
 import useSession from "@/app/_hooks/useSession";
 import { useLoading } from "@/app/_hooks/useLoading";
 import useWebhookSSE from "@/app/_hooks/useWebhookSSE";
-import { DEMO_SCENARIOS, type DemoScenario } from "@/app/_lib/scenarios";
+import type { DemoScenario } from "@/app/_lib/scenarios";
 import { Button } from "@/app/_components/ui/button";
 import IntellaFrame from "./IntellaFrame";
 import Result, { type EndReason } from "./Result";
@@ -18,9 +18,13 @@ const TOAST_MESSAGES = {
   sessionError: "The session ended with an error on the platform.",
 } as const;
 
-export const EquAIPlatform = () => {
+type Props = {
+  scenarios: readonly DemoScenario[];
+};
+
+export const EquAIPlatform = ({ scenarios }: Props) => {
   const [chosenScenario, setChosenScenario] = useState<DemoScenario>(
-    DEMO_SCENARIOS[0],
+    scenarios[0],
   );
   const [result, setResult] = useState<AssessmentResult | null>(null);
   const [endReason, setEndReason] = useState<EndReason | null>(null);
@@ -142,6 +146,7 @@ export const EquAIPlatform = () => {
       <div className="flex h-full flex-col">
         <div className="flex flex-col gap-4">
           <Scenario
+            scenarios={scenarios}
             chosenScenario={chosenScenario}
             onChangeScenario={onChangeScenario}
             disabled={isSessionLoading || !!src}
@@ -165,9 +170,7 @@ export const EquAIPlatform = () => {
             )}
           </AnimatePresence>
           <AnimatePresence>
-            {showResult && (
-              <Result result={result} endReason={endReason} />
-            )}
+            {showResult && <Result result={result} endReason={endReason} />}
           </AnimatePresence>
         </div>
       </div>

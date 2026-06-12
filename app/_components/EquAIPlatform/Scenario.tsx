@@ -17,25 +17,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/app/_components/ui/table";
-import { DEMO_SCENARIOS, type DemoScenario } from "@/app/_lib/scenarios";
+import type { DemoScenario } from "@/app/_lib/scenarios";
 
 type Props = {
+  scenarios: readonly DemoScenario[];
   chosenScenario: DemoScenario;
   onChangeScenario: (scenario: DemoScenario) => void;
   disabled?: boolean;
 };
 
 const Scenario = ({
+  scenarios,
   chosenScenario,
   onChangeScenario,
   disabled = false,
 }: Props) => {
   const handleValueChange = useCallback(
     (value: unknown) => {
-      const next = DEMO_SCENARIOS.find((s) => s.id === value);
+      const next = scenarios.find((s) => s.id === value);
       if (next) onChangeScenario(next);
     },
-    [onChangeScenario],
+    [scenarios, onChangeScenario],
   );
 
   return (
@@ -62,7 +64,7 @@ const Scenario = ({
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
-          {DEMO_SCENARIOS.map((scenario) => (
+          {scenarios.map((scenario) => (
             <SelectItem key={scenario.id} value={scenario.id}>
               {scenario.label}
             </SelectItem>
