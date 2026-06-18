@@ -9,6 +9,7 @@ import {
   PLATFORM_API_KEY,
   PLATFORM_API_KEY_VAR,
   PLATFORM_URL,
+  resolveConversationUrl,
 } from "./platform";
 
 // Default timeout for outbound HTTP requests to the EQU AI Platform.
@@ -60,7 +61,10 @@ export class SessionsRepository {
     });
     const res: EquApiResponse<CreateSessionResponse> = await response.json();
     if (res.status === "OK" && res.result) {
-      return res.result;
+      return {
+        ...res.result,
+        conversation_url: resolveConversationUrl(res.result.conversation_url),
+      };
     }
     throw new AppError(
       res.errorMessage || "Failed to create session",

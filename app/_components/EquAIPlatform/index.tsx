@@ -39,6 +39,20 @@ export const EquAIPlatform = ({ scenarios }: Props) => {
   // matching webhook session_error that follows doesn't double-notify.
   const endedEarlyFromIframeRef = useRef(false);
 
+  // Set while the iframe is in the in-call error-report flow (SESSION_REPORTING).
+  // While set, the iframe owns the lifecycle: the platform's session_error webhook
+  // (fired because reporting cancels the dialog) must NOT tear the iframe down — we
+  // wait for the iframe's own SESSION_ENDED once the learner finishes the report.
+  const reportingRef = useRef(false);
+
+  const clearReportingState = useCallback(() => {
+    reportingRef.current = false;
+  }, []);
+
+  const onReporting = useCallback(() => {
+    reportingRef.current = true;
+  }, []);
+
   const { create: createSession } = useSession();
   const { isLoading: isSessionLoading, withLoading: withSessionLoading } =
     useLoading();
@@ -54,6 +68,9 @@ export const EquAIPlatform = ({ scenarios }: Props) => {
     }
 
     if (payload.type === "session_error") {
+      // While the learner is filling the in-call error report, the iframe owns the
+      // lifecycle — wait for its SESSION_ENDED instead of tearing it down here.
+      if (reportingRef.current) return;
       // Only toast when the iframe didn't already signal the end (rare path:
       // platform-side failure while iframe is unresponsive). Otherwise the
       // "ended-early" panel below is the canonical feedback.
@@ -86,6 +103,7 @@ export const EquAIPlatform = ({ scenarios }: Props) => {
     setSessionId(null);
     activeScenarioRef.current = chosenScenario;
     endedEarlyFromIframeRef.current = false;
+    clearReportingState();
     withSessionLoading(
       async () => {
         const response = await createSession({
@@ -98,7 +116,7 @@ export const EquAIPlatform = ({ scenarios }: Props) => {
         toast.error(error instanceof Error ? error.message : String(error));
       },
     );
-  }, [chosenScenario, withSessionLoading, createSession]);
+  }, [chosenScenario, withSessionLoading, createSession, clearReportingState]);
 
   const onConversationEnded = useCallback(() => {
     // For scenarios that don't produce an assessment, the iframe's
@@ -109,25 +127,28 @@ export const EquAIPlatform = ({ scenarios }: Props) => {
     // We also mark the iframe-end ref: if a later webhook session_error
     // arrives (manual termination, timeout), we already conveyed the end
     // here and the panel will show it, so a toast would double-notify.
+    const wasReporting = reportingRef.current;
+    clearReportingState();
     endedEarlyFromIframeRef.current = true;
     startTransition(() => {
       setSrc(null);
-      if (!activeScenarioRef.current.producesResults) {
-        setEndReason("no-analysis");
+      if (wasReporting || !activeScenarioRef.current.producesResults) {
+        setEndReason(wasReporting ? "ended-early" : "no-analysis");
         setSessionId(null);
       }
     });
-  }, []);
+  }, [clearReportingState]);
 
   const onConversationEndedEarly = useCallback(() => {
     // Manual cancel / timeout / platform error — no assessment will arrive.
+    clearReportingState();
     endedEarlyFromIframeRef.current = true;
     startTransition(() => {
       setSrc(null);
       setEndReason("ended-early");
       setSessionId(null);
     });
-  }, []);
+  }, [clearReportingState]);
 
   const onChangeScenario = useCallback((scenario: DemoScenario) => {
     setChosenScenario(scenario);
@@ -166,6 +187,7 @@ export const EquAIPlatform = ({ scenarios }: Props) => {
                 src={src}
                 onEnded={onConversationEnded}
                 onError={onConversationEndedEarly}
+                onReporting={onReporting}
               />
             )}
           </AnimatePresence>

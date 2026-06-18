@@ -46,6 +46,28 @@ export const DEMO_SCENARIOS: readonly DemoScenario[] = DEFAULT_SCENARIOS.map(
   },
 );
 
+// Optional override for the learner-webapp host. When LEARNER_WEBAPP_URL is
+// set, the origin of the platform-issued conversation_url is swapped while its
+// path and query (the nonce credential) are preserved.
+const learnerWebappOverride = (process.env.LEARNER_WEBAPP_URL ?? "").trim();
+
+export function resolveConversationUrl(conversationUrl: string): string {
+  if (!learnerWebappOverride) return conversationUrl;
+  try {
+    const target = new URL(conversationUrl);
+    const replacement = new URL(learnerWebappOverride);
+    target.protocol = replacement.protocol;
+    target.host = replacement.host;
+    return target.toString();
+  } catch {
+    return conversationUrl;
+  }
+}
+
 if (!isProduction) {
   console.log(`[platform] staging -> ${PLATFORM_URL}`);
+}
+
+if (learnerWebappOverride) {
+  console.log(`[platform] learner webapp -> ${learnerWebappOverride}`);
 }
