@@ -30,6 +30,7 @@ type Props = {
   onStart?: () => void;
   onError?: () => void;
   onReporting?: () => void;
+  onReported?: () => void;
 };
 
 const IntellaFrame = ({
@@ -39,6 +40,7 @@ const IntellaFrame = ({
   onStart,
   onError,
   onReporting,
+  onReported,
 }: Props) => {
   const expectedOrigin = new URL(src).origin;
   const frameHeight = useSyncExternalStore(
@@ -72,12 +74,23 @@ const IntellaFrame = ({
             // Learner is filling the in-call error report: keep the iframe open.
             onReporting?.();
             break;
+          case "SESSION_REPORTED":
+            onReported?.();
+            break;
           default:
             break;
         }
       }
     },
-    [expectedOrigin, onMessage, onEnded, onStart, onError, onReporting],
+    [
+      expectedOrigin,
+      onMessage,
+      onEnded,
+      onStart,
+      onError,
+      onReporting,
+      onReported,
+    ],
   );
 
   useEffect(() => {
