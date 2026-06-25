@@ -66,8 +66,9 @@ const IntellaFrame = ({
           case "SESSION_ENDED":
             onEnded?.();
             break;
+          case "SESSION_CANCELED":
           case "SESSION_ERROR":
-            // Manual termination, timeout, or platform error — no assessment will arrive.
+            // Manual cancel, early exit, timeout, or platform error — no assessment will arrive.
             onError?.();
             break;
           case "SESSION_REPORTING":

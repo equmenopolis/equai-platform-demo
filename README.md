@@ -85,7 +85,7 @@ Defined in `app/_lib/scenarios.ts`. Edit that file to swap in IDs supplied by yo
 
 1. User picks a scenario and clicks **Start Conversation** → `POST /api/sessions` proxies to the platform and returns `{ session, nonce, conversation_url }`.
 2. Demo embeds the `conversation_url` as an iframe.
-3. iframe emits `SESSION_STARTED` / `SESSION_ENDED` / `SESSION_ERROR` via `postMessage`; the demo closes the iframe on `SESSION_ENDED`.
+3. iframe emits `SESSION_STARTED`, then a terminal `SESSION_ENDED` (completed), `SESSION_CANCELED` (manual stop / early exit), or `SESSION_ERROR` (timeout or error) via `postMessage`; the demo tears down the iframe on any terminal event.
 4. Platform calls `POST /api/webhook` with `assessment_completed` (scored scenarios) or `session_ended` (always).
 5. Demo persists payloads in an in-memory store and fans them out to the browser via `GET /api/sse/[sessionId]`.
 6. Result panel renders CEFR (radar + accordion), Can-Do (raw JSON), and review questions (raw JSON), each shown only when its field is non-null.
@@ -94,7 +94,7 @@ Defined in `app/_lib/scenarios.ts`. Edit that file to swap in IDs supplied by yo
 
 | Route | Description |
 |---|---|
-| `POST /api/sessions` | Creates a platform session and returns `{ session, nonce }`. Injects the API key server-side. |
+| `POST /api/sessions` | Creates a platform session and returns `{ session, nonce, conversation_url }`. Injects the API key server-side. |
 | `POST /api/webhook` | Platform → demo callback. Validates the `Authorization` header against the registered secret (constant-time compare). |
 | `GET /api/webhook/[sessionId]` | Polls the stored payload for a given session (404 until received). |
 | `GET /api/sse/[sessionId]` | Server-Sent Events stream that fans out webhook payloads to the browser. |
@@ -107,8 +107,11 @@ The parent listens to `window.message` and **must** validate `event.origin` agai
 |---|---|
 | `SESSION_ID_ASSIGNED` | InteLLA assigns a session ID. |
 | `SESSION_STARTED` | User enters the active conversation. |
-| `SESSION_ENDED` | Conversation ended (natural or manual). |
-| `SESSION_ERROR` | Timeout, termination, or other in-session error. |
+| `SESSION_ENDED` | Conversation completed normally. |
+| `SESSION_CANCELED` | User manually stopped, or left on a pre-conversation screen (waiting / auth). No assessment follows. |
+| `SESSION_ERROR` | Timeout or in-session platform error. No assessment follows. |
+| `SESSION_REPORTING` | Learner opened the in-call problem report; the iframe stays open. |
+| `SESSION_REPORTED` | Learner finished the problem report. |
 
 ## Scripts
 
@@ -119,7 +122,7 @@ The parent listens to `window.message` and **must** validate `event.origin` agai
 
 ## Stack
 
-Next.js 16 (App Router) · React 19 · Tailwind CSS 4 + shadcn/ui + Base UI · Framer Motion · Sonner · Zod · ulidx.
+Next.js 16 (App Router) · React 19 · Tailwind CSS 4 + shadcn/ui + Base UI · Framer Motion · Sonner · Zod.
 
 See [`AGENTS.md`](./AGENTS.md) for Next.js 16 breaking-change notes.
 
@@ -130,4 +133,4 @@ This repository is a reference demo and favours readability over hardening. Befo
 - **Persist the webhook secret** across restarts; the demo regenerates a per-process secret on every boot when `WEBHOOK_SECRET` is blank.
 - **Replace the in-memory webhook store** (`app/api/_lib/sse-store.ts`) with a database — restarts and multi-instance deploys drop in-flight payloads.
 - **Use a stable tunnel hostname** (named Cloudflare tunnel, reserved ngrok domain, or a real public host) instead of free-tier rotating URLs.
-- **Replace `DEMO_USER_ID = ulid()`** in `app/_components/EquAIPlatform/index.tsx` with your authenticated user's identifier; the platform echoes it in every webhook payload.
+- **Set a real `user_id`** — the demo derives a deterministic per-API-key id in `app/api/_lib/sessions-repository.ts` (`stableUserId`); swap it for your authenticated user's identifier so the platform attributes each session to the right person. It's echoed in every webhook payload.
